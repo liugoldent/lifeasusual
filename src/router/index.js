@@ -21,6 +21,9 @@ const routes = [
   {
     path: '/order',
     name: 'Order',
+    meta: {
+      title: 'Test'
+    },
     component: () => import('../views/Order.vue')
   }
 ]
@@ -29,6 +32,15 @@ const router = new VueRouter({
   mode: 'history',
   base: process.env.BASE_URL,
   routes
+})
+// 修改每頁頁籤標題
+router.beforeEach((to, from, next) => {
+  if (to.meta.title) {
+    document.title = to.meta.title
+  }else{
+    document.title = '如常 朝午食'
+  }
+  next();
 })
 
 export default router
