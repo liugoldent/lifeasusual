@@ -6,13 +6,13 @@
     <!-- 客人資訊 -->
     <div class="flex lg:flex-row flex-col justify-center items-center">
         <div class="flex flex-col">
-            <div class="m-2 lg:m-16">
+            <div class="m-2 lg:m-12">
                 <p class="text-lg font-black text-blue-900">
                     訂購人稱呼/訂購人姓名:
                 </p>
                 <input class="border placeholder-opacity-50 text-center" placeholder="先生/小姐" type="text" v-model="name"/>
             </div>
-            <div class="m-2 lg:m-16">
+            <div class="m-2 lg:m-12">
                 <p class="text-lg font-black text-blue-900">
                     訂購人電話
                 </p>
@@ -20,7 +20,7 @@
             </div>
         </div>
 
-        <div class="m-2">
+        <div class="m-2 lg:m-12">
             <p class="text-lg font-black text-blue-900">
                 取餐日期
             </p>
@@ -29,7 +29,7 @@
             </div>
         </div>
 
-        <div class="m-2">
+        <div class="m-2 lg:m-12">
           <p class="text-lg font-black text-blue-900">
               備註:
           </p>
