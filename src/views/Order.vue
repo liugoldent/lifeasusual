@@ -2,7 +2,7 @@
 
 <template>
 
-<div class="flex flex-col bg-gradient-to-t from-gray-100">
+<div class="flex flex-col bg-gradient-to-t from-gray-100 text-center">
     <!-- 客人資訊 -->
     <div class="flex lg:flex-row flex-col justify-center items-center">
         <div class="flex flex-col">
@@ -78,7 +78,6 @@
 </template>
 
 <script>
-
 import {
     library
 }
