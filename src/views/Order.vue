@@ -1,6 +1,11 @@
 <template>
 
   <div class="flex flex-col bg-gradient-to-t from-gray-100 text-center">
+    <loading :active="isLoading"
+             :can-cancel="false"
+             :on-cancel="onCancel"
+             :is-full-page="true"/>
+    <NavComp title="網路點餐" bgColor="bg-red-600"></NavComp>
     <!-- 客人資訊 -->
     <div class="flex lg:flex-row flex-col justify-center items-center">
       <div class="flex flex-col">
@@ -67,7 +72,8 @@
               </button>
             </div>
             <div v-else>
-              <p class="m-2 text-4xl text-red-600	border-double border-4 border-blue-500 p-5 animate-pulse">Sold Out</p>
+              <p class="m-2 text-4xl text-red-600	border-double border-4 border-blue-700 p-5 animate-pulse">Sold
+                Out</p>
             </div>
           </div>
         </div>
@@ -94,14 +100,18 @@ import {
   from '@fortawesome/free-solid-svg-icons'
 import menu from '@/menu/menu.json'
 import $ from 'jquery'
+import NavComp from '@/components/NavComp'
+
 
 library.add(faPlus, faMinus, faPaperPlane)
-
+import { getGoogleSheetDataPublicJS } from '@/publicItemJS/getGoogleSheet'
 export default {
   name: "Order",
   async mounted() {
+    this.isLoading = true
     await this.getGoogleSheetData()
     this.setAllItemsOnView()
+    this.isLoading = false
   },
   data() {
     return {
@@ -114,10 +124,13 @@ export default {
       phone: '', // 客戶電話
       remark: '', // 客戶備註
 
-      soldOutStatus: [] // 售完狀況
+      isLoading: false,
+      soldOutStatus: []
     }
   },
-  components: {},
+  components: {
+    NavComp
+  },
   methods: {
     /**
      * 發送資料給google excel
@@ -148,50 +161,38 @@ export default {
      * 得到google的資料
      */
     async getGoogleSheetData() {
-      const self = this
-      let parameter = {
-        url: 'https://docs.google.com/spreadsheets/d/1pHB6t2SOqGyMf1S4rcmawDbGJ3MLliUAcRgGjPdIX44/edit#gid=0',
-        name: '商品銷售狀況',
-        startRow: 1,
-        startColumn: 1
-      };
-      await $.get('https://script.google.com/macros/s/AKfycbytQm3cq7KYye607UbMzQzscAZFe0bvOvTEDlmu2JK8f1nh9anpIxcWaiFNPMLuniQbcw/exec', parameter, function (data) {
-        if (!data) {
-          console.log('無資料');
-        } else {
-          console.log(data)
-          self.setSoldOutStatus(data)
-        }
-      });
+      this.setSoldOutStatus(await getGoogleSheetDataPublicJS())
     },
     /**
      * 設定售完資訊（將string 轉成 array）
      */
     setSoldOutStatus(itemsFormat) {
       let laItemsFormat = itemsFormat.split(',')
-      const lnItemsLength =  laItemsFormat.length
-      for(let i = 0 , len = lnItemsLength/2 ; i < len;  i++){
+      const lnItemsLength = laItemsFormat.length
+      for (let i = 0, len = lnItemsLength / 2; i < len; i++) {
         this.soldOutStatus.push({
           name: laItemsFormat[i],
-          soldOutStatus: laItemsFormat[i+len]
+          soldOutStatus: laItemsFormat[i + len]
         })
       }
-      console.log(laItemsFormat)
     },
     /**
      * 設定畫面上顯示的資料（包含sold out 資訊）
      */
-    setAllItemsOnView(){
+    setAllItemsOnView() {
       this.orderPageMenu = menu
       this.sandwichContent = this.orderPageMenu['sandwich']
       this.drinkContent = this.orderPageMenu['drink']
-      for(let i = 0 , len = this.sandwichContent.length ; i < len ; i++){
-        for(let j = 0 , lenj = this.soldOutStatus.length ; j < lenj ; j++){
-          if(this.sandwichContent[i].name === this.soldOutStatus[j].name){
+      for (let i = 0, len = this.sandwichContent.length; i < len; i++) {
+        for (let j = 0, lenj = this.soldOutStatus.length; j < lenj; j++) {
+          if (this.sandwichContent[i].name === this.soldOutStatus[j].name) {
             this.sandwichContent[i]['soldOutStatus'] = this.soldOutStatus[j]['soldOutStatus']
           }
         }
       }
+    },
+    onCancel() {
+      console.log('User cancelled the loader.')
     }
   },
 };

@@ -25,6 +25,18 @@ const routes = [
       title: '網路點餐'
     },
     component: () => import('../views/Order.vue')
+  },
+  {
+    path: '*',
+    redirect: '/'
+  },
+  {
+    path: '/backstage',
+    name: 'BackStage',
+    meta: {
+      title: '如常朝午食 後台系統'
+    },
+    component: () => import('../views/BackStage.vue')
   }
 ]
 
