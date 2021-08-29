@@ -87,7 +87,7 @@
     <!--    confirm 視窗-->
     <confirm v-if="confirmDialogStatus" @closeDialog="closeConfirm" :clientNeedOrderItems="clientOrderItems"/>
     <!--    alert 視窗-->
-    <alert v-if="alertDialogStatus" :showMsg="alertMsg"/>
+    <alert v-if="alertDialogStatus" :showMsg="alertMsg" :alertIconPassOrNot="alertIconPassStatus"/>
   </div>
 </template>
 
@@ -128,10 +128,13 @@ export default {
       confirmDialogStatus: false, // 開關confirm的dialog
       clientOrderItems: [], // 客人想要點的餐點（陣列）
       alertDialogStatus: false, // alert 視窗 開啟
-      alertMsg:'預定完成，我們將儘速為您準備餐點' // alert 訊息
+      alertMsg:'', // alert 訊息
+      alertIconPassStatus: true
     }
   },
-  watch: {},
+  inject: [
+    'reload'
+  ],
   components: {
     NavComp
   },
@@ -159,10 +162,12 @@ export default {
         success: function (response) {
           if (response == "成功") {
             self.isLoading = false
+            self.alertMsg = '預定完成，我們將儘速為您準備餐點'
             self.alertDialogStatus = true
           }
           setTimeout(()=>{
             self.alertDialogStatus = false
+            self.reload()
           },2000)
         },
       });
@@ -241,6 +246,16 @@ export default {
         }
         return accumulator
       }, [])
+      if(this.clientOrderItems.length === 0){
+        this.alertIconPassStatus = false
+        this.alertDialogStatus = true
+        this.alertMsg = '請先選擇餐點'
+        setTimeout(()=>{
+          this.alertDialogStatus = false
+          this.alertIconPassStatus = true
+        },1000)
+        return
+      }
       this.confirmDialogStatus = true
     }
   },

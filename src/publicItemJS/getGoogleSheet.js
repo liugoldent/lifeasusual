@@ -17,7 +17,6 @@ export async function getGoogleSheetDataPublicJS() {
             console.log('無資料');
         } else {
             cbData = data
-            console.log(data)
         }
     });
     return cbData
