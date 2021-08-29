@@ -1,5 +1,4 @@
 <template>
-
   <div class="flex flex-col bg-gradient-to-t from-gray-100 text-center">
     <loading :active="isLoading"
              :can-cancel="false"
@@ -42,10 +41,10 @@
     </div>
     <!-- 商品頁面 -->
     <div class="w-screen flex flex-row justify-around flex-wrap">
-      <div v-for="(item,index) in sandwichContent" :key="index"
+      <div v-for="(item,index) in itemsContent" :key="index"
            class="w-auto lg:w-4/12 bg-gradient-to-t from-red-50 m-5 p-5 rounded-lg flex-col flex justify-center items-center">
         <!-- 圖片與敘述 -->
-        <div class="flex flex-col justify-center items-center">
+        <div v-if="item.img.length > 0" class="flex flex-col justify-center items-center">
           <img src="https://picsum.photos/800/500">
           <p class="m-1">
             {{ item.narrate }}
@@ -61,13 +60,13 @@
               NT：{{ item.price }}
             </p>
           </div>
-          <div class="flex flex-row justify-center items-center">
+          <div class="flex flex-row justify-center items-center w-full">
             <div v-if="item.soldOutStatus === 'v'">
-              <button class="m-2 text-2xl">
+              <button class="m-2 text-2xl" @click="orderDecrease(item,index)">
                 <font-awesome-icon icon="minus"/>
               </button>
-              <input class="rounded-lg h-9 m-2"/>
-              <button class="m-2 text-2xl">
+              <input class="rounded-lg h-9 m-2 text-center w-1/2 border-black border" :value="item.orderCount"/>
+              <button class="m-2 text-2xl" @click="orderIncrease(item,index)">
                 <font-awesome-icon icon="plus"/>
               </button>
             </div>
@@ -81,12 +80,13 @@
     </div>
     <!-- 送出按鈕 -->
     <div class="flex justify-around m-5">
-      <button @click="postGoogleSheetData()" class="h-auto w-auto bg-blue-50 rounded-lg text-4xl p-5">送出
+      <button @click="openConfirmDialog()" class="h-auto w-auto bg-blue-50 rounded-lg text-4xl p-5">送出
         <font-awesome-icon icon="paper-plane"/>
       </button>
     </div>
+    <!--    confirm 視窗-->
+    <confirm v-if="confirmDialogStatus" @closeDialog="closeConfirm" :clientNeedOrderItems="clientOrderItems"/>
   </div>
-
 </template>
 
 <script>
@@ -98,36 +98,36 @@ import {
   faPlus, faMinus, faPaperPlane
 }
   from '@fortawesome/free-solid-svg-icons'
-import menu from '@/menu/menu.json'
 import $ from 'jquery'
 import NavComp from '@/components/NavComp'
 
 
 library.add(faPlus, faMinus, faPaperPlane)
-import { getGoogleSheetDataPublicJS } from '@/publicItemJS/getGoogleSheet'
+import {getGoogleSheetDataPublicJS} from '@/publicItemJS/getGoogleSheet'
+
 export default {
   name: "Order",
   async mounted() {
     this.isLoading = true
     await this.getGoogleSheetData()
-    this.setAllItemsOnView()
     this.isLoading = false
   },
   data() {
     return {
-      orderPageMenu: {}, // 如常朝午食 餐點
-      sandwichContent: [], // 三明治的餐點
-      drinkContent: [], // 飲品的餐點
+      itemsContent: [], // 三明治的餐點
       orderDate: new Date(), // 點餐日期&時間
       timeZone: '', // 時區
       name: '', // 客戶名稱
       phone: '', // 客戶電話
       remark: '', // 客戶備註
 
-      isLoading: false,
-      soldOutStatus: []
+      isLoading: false, // 是否正在loading
+      soldOutStatus: [], // 售完狀況
+      confirmDialogStatus: false, // 開關confirm的dialog
+      clientOrderItems: [] // 客人想要點的餐點（陣列）
     }
   },
+  watch: {},
   components: {
     NavComp
   },
@@ -163,36 +163,73 @@ export default {
     async getGoogleSheetData() {
       this.setSoldOutStatus(await getGoogleSheetDataPublicJS())
     },
-    /**
-     * 設定售完資訊（將string 轉成 array）
+    /**x
+     * 設定產品資訊（將string 轉成 array）
      */
     setSoldOutStatus(itemsFormat) {
-      let laItemsFormat = itemsFormat.split(',')
-      const lnItemsLength = laItemsFormat.length
-      for (let i = 0, len = lnItemsLength / 2; i < len; i++) {
-        this.soldOutStatus.push({
-          name: laItemsFormat[i],
-          soldOutStatus: laItemsFormat[i + len]
-        })
+      try {
+        const startColumn = +itemsFormat.slice(2,4) // 取出起始column
+        const endRow = +itemsFormat.slice(4,6) // 取出結束列
+        const endColumn = +itemsFormat.slice(6,8) // 取出結束行
+        let lsItemsFormat = itemsFormat.substr(8, itemsFormat.length) // 將起始與結束列行的字串資料刪掉
+        let laItemsFormat = lsItemsFormat.split(',') // 開始切字串(切成只有產品資訊)
+        let itemArray = []
+        for (let i = 1, len = endColumn - startColumn; i <= len; i++) {
+          let tempObj = {}
+          for (let j = 0, lenj = endRow; j < lenj; j++) {
+            tempObj[laItemsFormat[endColumn * j]] = laItemsFormat[j * endColumn + i]
+          }
+          itemArray.push(tempObj)
+        }
+        this.itemsContent = Object.assign(itemArray)
+      }
+      catch(e){
+        console.log(e)
       }
     },
     /**
-     * 設定畫面上顯示的資料（包含sold out 資訊）
+     * @description 點餐份數增加
+     * @param item 點到的產品
+     * @param index 點到的index
      */
-    setAllItemsOnView() {
-      this.orderPageMenu = menu
-      this.sandwichContent = this.orderPageMenu['sandwich']
-      this.drinkContent = this.orderPageMenu['drink']
-      for (let i = 0, len = this.sandwichContent.length; i < len; i++) {
-        for (let j = 0, lenj = this.soldOutStatus.length; j < lenj; j++) {
-          if (this.sandwichContent[i].name === this.soldOutStatus[j].name) {
-            this.sandwichContent[i]['soldOutStatus'] = this.soldOutStatus[j]['soldOutStatus']
-          }
-        }
+    orderIncrease(item, index) {
+      let cloneItem = item
+      cloneItem.orderCount++
+      this.$set(this.itemsContent, index, cloneItem)
+    },
+    /**
+     * @description 點餐份數減少
+     * @param item 點到的產品
+     * @param index 點到的index
+     */
+    orderDecrease(item, index) {
+      let cloneItem = item
+      cloneItem.orderCount--
+      if (cloneItem.orderCount < 0) {
+        cloneItem.orderCount = 0
       }
+      this.$set(this.itemsContent, index, cloneItem)
+    },
+    /**
+     * @description 關閉confirm視窗
+     */
+    closeConfirm() {
+      this.confirmDialogStatus = false
     },
     onCancel() {
       console.log('User cancelled the loader.')
+    },
+    /**
+     * @description 開啟confirm 視窗
+     */
+    openConfirmDialog() {
+      this.clientOrderItems = this.itemsContent.reduce((accumulator, currentValue)=>{
+        if(+currentValue.orderCount > 0){
+          accumulator.push(currentValue)
+        }
+        return accumulator
+      },[])
+      this.confirmDialogStatus = true
     }
   },
 };

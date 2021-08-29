@@ -8,9 +8,11 @@ import Calendar from 'v-calendar/lib/components/calendar.umd' // vue 的日曆�
 import DatePicker from 'v-calendar/lib/components/date-picker.umd' // vue的日期選擇
 import Loading from 'vue-loading-overlay';
 import 'vue-loading-overlay/dist/vue-loading.css';
-
+import Confirm from '@/components/orderConfirm.vue'
+window.confirm = function() {};
 
 // Register components in your 'main.js'
+Vue.component('confirm', Confirm)
 Vue.component('loading', Loading)
 Vue.component('calendar', Calendar)
 Vue.component('date-picker', DatePicker)
