@@ -86,6 +86,8 @@
     </div>
     <!--    confirm 視窗-->
     <confirm v-if="confirmDialogStatus" @closeDialog="closeConfirm" :clientNeedOrderItems="clientOrderItems"/>
+    <!--    alert 視窗-->
+    <alert v-if="alertDialogStatus" :showMsg="alertMsg"/>
   </div>
 </template>
 
@@ -124,7 +126,9 @@ export default {
       isLoading: false, // 是否正在loading
       soldOutStatus: [], // 售完狀況
       confirmDialogStatus: false, // 開關confirm的dialog
-      clientOrderItems: [] // 客人想要點的餐點（陣列）
+      clientOrderItems: [], // 客人想要點的餐點（陣列）
+      alertDialogStatus: false, // alert 視窗 開啟
+      alertMsg:'預定完成，我們將儘速為您準備餐點' // alert 訊息
     }
   },
   watch: {},
@@ -135,8 +139,10 @@ export default {
     /**
      * 發送資料給google excel
      */
-    postGoogleSheetData() {
-      $.ajax({
+    async postGoogleSheetData() {
+      const self = this
+      self.isLoading = true
+      await $.ajax({
         type: "post",
         url: "https://script.google.com/macros/s/AKfycbytQm3cq7KYye607UbMzQzscAZFe0bvOvTEDlmu2JK8f1nh9anpIxcWaiFNPMLuniQbcw/exec",
         data: {
@@ -152,8 +158,12 @@ export default {
         },
         success: function (response) {
           if (response == "成功") {
-            alert("成功::::");
+            self.isLoading = false
+            self.alertDialogStatus = true
           }
+          setTimeout(()=>{
+            self.alertDialogStatus = false
+          },2000)
         },
       });
     },
@@ -168,9 +178,9 @@ export default {
      */
     setSoldOutStatus(itemsFormat) {
       try {
-        const startColumn = +itemsFormat.slice(2,4) // 取出起始column
-        const endRow = +itemsFormat.slice(4,6) // 取出結束列
-        const endColumn = +itemsFormat.slice(6,8) // 取出結束行
+        const startColumn = +itemsFormat.slice(2, 4) // 取出起始column
+        const endRow = +itemsFormat.slice(4, 6) // 取出結束列
+        const endColumn = +itemsFormat.slice(6, 8) // 取出結束行
         let lsItemsFormat = itemsFormat.substr(8, itemsFormat.length) // 將起始與結束列行的字串資料刪掉
         let laItemsFormat = lsItemsFormat.split(',') // 開始切字串(切成只有產品資訊)
         let itemArray = []
@@ -182,8 +192,7 @@ export default {
           itemArray.push(tempObj)
         }
         this.itemsContent = Object.assign(itemArray)
-      }
-      catch(e){
+      } catch (e) {
         console.log(e)
       }
     },
@@ -213,7 +222,10 @@ export default {
     /**
      * @description 關閉confirm視窗
      */
-    closeConfirm() {
+    async closeConfirm(msg) {
+      if (msg === 'ok') {
+        await this.postGoogleSheetData()
+      }
       this.confirmDialogStatus = false
     },
     onCancel() {
@@ -223,12 +235,12 @@ export default {
      * @description 開啟confirm 視窗
      */
     openConfirmDialog() {
-      this.clientOrderItems = this.itemsContent.reduce((accumulator, currentValue)=>{
-        if(+currentValue.orderCount > 0){
+      this.clientOrderItems = this.itemsContent.reduce((accumulator, currentValue) => {
+        if (+currentValue.orderCount > 0) {
           accumulator.push(currentValue)
         }
         return accumulator
-      },[])
+      }, [])
       this.confirmDialogStatus = true
     }
   },

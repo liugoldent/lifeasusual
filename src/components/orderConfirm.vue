@@ -18,14 +18,14 @@
           class="mt-3 w-full inline-flex justify-center rounded-md border
           border-gray-300 shadow-sm px-4 py-2 bg-red-400 text-base font-medium text-gray-700
           hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2
-          focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm" @click="closeDialog">
+          focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm" @click="closeDialog('cancel')">
           取消
         </button>
         <button
           class="mt-3 w-full inline-flex justify-center rounded-md border
           border-gray-300 shadow-sm px-4 py-2 bg-green-400 text-base font-medium text-gray-700
           hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2
-          focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm" @click="closeDialog">
+          focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm" @click="closeDialog('ok')">
           確認
         </button>
       </div>
@@ -48,8 +48,8 @@ library.add(faExclamation)
 export default {
   name: "orderConfirm.vue",
   methods: {
-    closeDialog() {
-      this.$emit('closeDialog')
+    closeDialog(msg) {
+      this.$emit('closeDialog', msg)
     }
   },
   props:{

@@ -9,9 +9,13 @@ import DatePicker from 'v-calendar/lib/components/date-picker.umd' // vue的日�
 import Loading from 'vue-loading-overlay';
 import 'vue-loading-overlay/dist/vue-loading.css';
 import Confirm from '@/components/orderConfirm.vue'
+import Alert from '@/components/Alert.vue'
 window.confirm = function() {};
+window.alert = function() {};
+
 
 // Register components in your 'main.js'
+Vue.component('alert', Alert)
 Vue.component('confirm', Confirm)
 Vue.component('loading', Loading)
 Vue.component('calendar', Calendar)
